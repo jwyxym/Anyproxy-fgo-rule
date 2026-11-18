@@ -6,7 +6,7 @@
     "stop": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/stop-anyproxy.ps1",
     "prestart": "npm run stop",
     "start": "anyproxy -p 8888 -w 8889 -i",
-    "start:with_script": "npm run start -r fgo.js",
+    "start:with_script": "npm run start -- -r fgo.js",
 	"ca": "anyproxy-ca"
   }
 }
