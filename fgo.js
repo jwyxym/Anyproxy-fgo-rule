@@ -1,21 +1,3 @@
-/* 
-  sample: 
-    modify response data of http://httpbin.org/user-agent
-  test:
-    curl 'http://httpbin.org/user-agent' --proxy http://127.0.0.1:8001
-  expected response:
-    { "user-agent": "curl/7.43.0" } -- AnyProxy Hacked! --
-	
-	//modify
-	修改FGO战斗数据
-	劫持ac.php请求的响应数据
-	在进入战斗时临时增加100000hp,技能全改为10级,宝具等级全为5级
-	敌方从者血量1/3,动作次数改为1,充能6格
-	
-	//todo
-	修改master技能，修改礼装技能，魔改从者(risk)
-*/
-
 module.exports = { * beforeSendResponse(requestDetail, responseDetail) {
         // 带key=battlesetup，battleresume参数分别为新建战斗和战斗重开
         if ((requestDetail.url.indexOf('ac.php') != -1) && (requestDetail.requestData.indexOf('key=battlesetup') != -1 || requestDetail.requestData.indexOf('key=battleresume') != -1)) {
@@ -29,44 +11,32 @@ module.exports = { * beforeSendResponse(requestDetail, responseDetail) {
                 //var count = 0;
                 for (var i = 0; i < svts.length; i++) {
 
-                    // 筛选所有敌方从者
-                    if (svts[i]['hpGaugeType'] != undefined) {
-                        // 修改血量 1/3
-                        var eohp = Number(svts[i]['hp']);
-                        ehp = parseInt(eohp / 3);
-                        if (typeof svts[i]['hp'] === 'number') {
-                            svts[i]['hp'] = String(ehp);
-                        } else {
-                            svts[i]['hp'] = ehp;
-                        }
+					const s = svts[i];
 
-                        // 最大1动
-                        svts[i]['maxActNum'] = 1;
-                        // 充能6格
-                        svts[i]['chargeTurn'] = 6;
-                    }
-                    // 筛选所有己方从者
-                    if (svts[i]['status'] != undefined && svts[i]['userId'] != undefined && svts[i]['userId'] != '0' && svts[i]['userId'] != 0) {
-                        // 原始数据中好友从者HP为string类型，需先转换为number
-                        var ohp = Number(svts[i]['hp']);
-                        hp = ohp + 100000;
-                        if (typeof svts[i]['hp'] === 'number') {
-                            svts[i]['hp'] = String(hp);
-                        } else {
-                            svts[i]['hp'] = hp;
-                        }
+					if (s.hpGaugeType != undefined) {
+						s.hp = typeof s.hp === 'string' ?'1' : 1;
+						s.maxActNum = 1;
+						s.chargeTurn = 6;
+					}
 
-                        svts[i]['skillLv1'] = '10';
-                        svts[i]['skillLv2'] = '10';
-                        svts[i]['skillLv3'] = '10';
-                        svts[i]['treasureDeviceLv'] = '5';
-                        //console.log('原始血量：'+ ohp + ' 新血量：' + svts[i]['hp']);
-                        //count = i;
-                    }
+					const isAlly =
+						s.status !== undefined &&
+						s.hpGaugeType === undefined &&
+						s.parentSvtId === undefined;
+
+					if (isAlly) {
+						s.atk = typeof s.atk === 'string' ?'999999' : 999999;
+						s.hp = typeof s.hp === 'string' ?'999999' : 999999;
+
+                        s.skillLv1 = '10';
+                        s.skillLv2 = '10';
+                        s.skillLv3 = '10';
+                        s.treasureDeviceLv = '5';
+					}
+
                 }
                 decJson['cache']['replaced']['battle'][0]['battleInfo']['userSvt'] = svts;
                 delete decJson['sign'];
-                //console.log('改后JSON对象中血量：第'+ count +'个 ' + decJson['cache']['replaced']['battle'][0]['battleInfo']['userSvt'][count]['hp']);
                 var encStr = JSON.stringify(decJson);
 
                 //JSON.stringify(JSON.parse(?))组合拳会将内容进行两次转义
